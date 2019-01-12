@@ -1,29 +1,80 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <head>
-    <title>Socket.IO chat</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font: 13px Helvetica, Arial; }
-      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-      #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages li { padding: 5px 10px; }
-      #messages li:nth-child(odd) { background: #eee; }
-    </style>
-  </head>
-  <body>
-    <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-    var socket = io();
-        socket.on('message', ( message ) => {
-            console.log('message', message);
-        });
-    </script>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Node Kinect2 Client</title>
+  <link rel="stylesheet" href="">
+</head>
+<body>
+  <canvas id="bodyCanvas" width="1024" height="1024"></canvas>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io.connect();
+    var canvas = document.getElementById('bodyCanvas');
+    var ctx = canvas.getContext('2d');
+    var colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
+
+    // handstate circle size
+    var HANDSIZE = 20;
+
+    // closed hand state color
+    var HANDCLOSEDCOLOR = "red";
+
+    // open hand state color
+    var HANDOPENCOLOR = "green";
+
+    // lasso hand state color
+    var HANDLASSOCOLOR = "blue";
+
+    function updateHandState(handState, jointPoint) {
+      switch (handState) {
+        case 3:
+          drawHand(jointPoint, HANDCLOSEDCOLOR);
+        break;
+
+        case 2:
+          drawHand(jointPoint, HANDOPENCOLOR);
+        break;
+
+        case 4:
+          drawHand(jointPoint, HANDLASSOCOLOR);
+        break;
+      }
+    }
+
+    function drawHand(jointPoint, handColor) {
+      // draw semi transparent hand cicles
+      ctx.globalAlpha = 0.75;
+      ctx.beginPath();
+      ctx.fillStyle = handColor;
+      ctx.arc(jointPoint.depthX * 512, jointPoint.depthY * 424, HANDSIZE, 0, Math.PI * 2, true);
+      ctx.fill();
+      ctx.closePath();
+      ctx.globalAlpha = 1;
+    }
+
+    socket.on('bodyFrame', function(bodyFrame){
+      console.log('bodyframe');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      var index = 0;
+      bodyFrame.bodies.forEach(function(body){
+        if(body.tracked) {
+          for(var jointType in body.joints) {
+            var joint = body.joints[jointType];
+            ctx.fillStyle = colors[index];
+            ctx.fillRect(joint.depthX * 512, joint.depthY * 424, 10, 10);
+          }
+          //draw hand states
+          updateHandState(body.leftHandState, body.joints[7]);
+          updateHandState(body.rightHandState, body.joints[11]);
+          index++;
+        }
+      });
+    });
+    socket.on('message', (message) => console.log(message));
+  </script>
+</body>
 </html>

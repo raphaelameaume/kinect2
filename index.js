@@ -9,14 +9,11 @@ if ( kinect.open() ) {
     console.log('kinect connected');
 
     kinect.on('bodyFrame', ( bodyFrame ) => {
-        console.log('bodyFrame', bodyFrame.bodies.length);
+        console.log('bodyFrame');
+        io.emit('bodyFrame', bodyFrame);
     });
 
     kinect.openBodyReader();
-
-    setTimeout( () => {
-        kinect.close();
-    }, 10000);
 }
 
 app.get('/', ( req, res ) => {

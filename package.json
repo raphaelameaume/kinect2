@@ -1,5 +1,5 @@
 {
-  "name": "kinect2",
+  "name": "kinect-test",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.16.4",
+    "kinect2": "^0.1.6",
     "socket.io": "^2.2.0",
     "ws": "^6.1.2"
   }
